@@ -117,9 +117,9 @@ void init_main()
   execute_cycles = 960;
   video_count = 960;
 
-  flush_translation_cache_rom();
-  flush_translation_cache_ram();
-  flush_translation_cache_bios();
+//  flush_translation_cache_rom();
+//  flush_translation_cache_ram();
+//  flush_translation_cache_bios();
 }
 
 u32 no_alpha = 0;

@@ -4057,7 +4057,8 @@ void raise_interrupt(irq_type irq_raised)
     reg[CHANGED_PC_STATUS] = 1;
   }
 }
-
+u8 *memory_map_read[8 * 1024];
+u8 *memory_map_write[8 * 1024];
 void execute_arm(u32 cycles)
 {
   u32 pc = reg[REG_PC];

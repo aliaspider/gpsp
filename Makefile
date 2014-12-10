@@ -198,7 +198,7 @@ else
 endif
 
 # Forcibly disable PIC
-fpic :=
+#fpic :=
 
 ifeq ($(DEBUG), 1)
 	OPTIMIZE_SAFE := -O0 -g
@@ -213,7 +213,7 @@ include Makefile.common
 
 OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
 
-DEFINES = -DHAVE_STRINGS_H -DHAVE_STDINT_H -DHAVE_INTTYPES_H -D__LIBRETRO__ -DINLINE=inline -DPC_BUILD -Wall -Werror=implicit-function-declaration
+DEFINES = -DHAVE_STRINGS_H -DHAVE_STDINT_H -DHAVE_INTTYPES_H -D__LIBRETRO__ -DINLINE=inline -DPC_BUILD -Wall -Werror=implicit-function-declaration -Wnarrowing -Wint-to-pointer-cast -Wpointer-to-int-cast
 
 ifeq ($(CPU_ARCH), arm)
 DEFINES += -DARM_ARCH
@@ -236,7 +236,7 @@ $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(CC) $(fpic) $(SHARED) $(INCFLAGS) $(OPTIMIZE) -o $@ $(OBJECTS) $(LIBM)
+	$(CC) $(fpic) $(SHARED) $(INCFLAGS) $(OPTIMIZE) -o $@ $(OBJECTS) $(LIBM) -Wl,--no-undefined
 endif
 
 cpu.o: cpu.c
