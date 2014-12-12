@@ -609,144 +609,20 @@ static void render_scanline_conditional_bitmap(u32 start, u32 end, u16 *scanline
 
 // Draws a single (partial or complete) tile from the tilemap, flipping
 // as necessary.
-typedef enum
-{
-   tile,
-   partial_tile_right,
-   partial_tile_mid,
-   partial_tile_left
-}tile_type_enum;
-typedef enum
-{
-   transparent,
-   base
-}
-combine_op_enum;
 
-typedef enum
-{
-   color16,
-   normal
-}alpha_op_enum;
-
-static inline void single_tile_map(tile_type_enum tile_type, combine_op_enum combine_op, int color_depth, alpha_op_enum alpha_op)
-{
-   switch(color_depth)
-   {
-   case 4:
-      get_tile_4bpp();
-      break;
-   case 8:
-      get_tile_8bpp();
-      break;
-   }
-
-  if(current_tile & 0x800)
-    tile_ptr += vertical_pixel_flip;
-
-  if(current_tile & 0x400)
-  {
-
-     switch(tile_ype)
-     {
-     case tile:
-        switch(color_depth)
-        {
-        case 4:
-           tile_flip_4bpp(combine_op, alpha_op);
-           break;
-        case 8:
-           tile_flip_8bpp(combine_op, alpha_op);
-           break;
-        }
-        break;
-     case partial_tile_right:
-        switch(color_depth)
-        {
-        case 4:
-           partial_tile_right_flip_4bpp(combine_op, alpha_op);
-           break;
-        case 8:
-           partial_tile_right_flip_8bpp(combine_op, alpha_op);
-           break;
-        }
-        break;
-     case partial_tile_mid:
-        switch(color_depth)
-        {
-        case 4:
-           partial_tile_mid_flip_4bpp(combine_op, alpha_op);
-           break;
-        case 8:
-           partial_tile_mid_flip_8bpp(combine_op, alpha_op);
-           break;
-        }
-        break;
-     case partial_tile_left:
-        switch(color_depth)
-        {
-        case 4:
-           partial_tile_left_flip_4bpp(combine_op, alpha_op);
-           break;
-        case 8:
-           partial_tile_left_flip_8bpp(combine_op, alpha_op);
-           break;
-        }
-        break;
-     }
-  }
-  else
-  {
-
-     switch(tile_ype)
-     {
-     case tile:
-        switch(color_depth)
-        {
-        case 4:
-           tile_noflip_4bpp(combine_op, alpha_op);
-           break;
-        case 8:
-           tile_noflip_8bpp(combine_op, alpha_op);
-           break;
-        }
-        break;
-     case partial_tile_right:
-        switch(color_depth)
-        {
-        case 4:
-           partial_tile_right_noflip_4bpp(combine_op, alpha_op);
-           break;
-        case 8:
-           partial_tile_right_noflip_8bpp(combine_op, alpha_op);
-           break;
-        }
-        break;
-     case partial_tile_mid:
-        switch(color_depth)
-        {
-        case 4:
-           partial_tile_mid_noflip_4bpp(combine_op, alpha_op);
-           break;
-        case 8:
-           partial_tile_mid_noflip_8bpp(combine_op, alpha_op);
-           break;
-        }
-        break;
-     case partial_tile_left:
-        switch(color_depth)
-        {
-        case 4:
-           partial_tile_left_noflip_4bpp(combine_op, alpha_op);
-           break;
-        case 8:
-           partial_tile_left_noflip_8bpp(combine_op, alpha_op);
-           break;
-        }
-        break;
-     }
-  }
-}
+#define single_tile_map(tile_type, combine_op, color_depth, alpha_op)         \
+  get_tile_##color_depth();                                                   \
+  if(current_tile & 0x800)                                                    \
+    tile_ptr += vertical_pixel_flip;                                          \
+                                                                              \
+  if(current_tile & 0x400)                                                    \
+  {                                                                           \
+    tile_type##_flip_##color_depth(combine_op, alpha_op);                     \
+  }                                                                           \
+  else                                                                        \
+  {                                                                           \
+    tile_type##_noflip_##color_depth(combine_op, alpha_op);                   \
+  }                                                                           \
 
 #define single_tile_map_base_4bpp_color16(tile_type)                          \
   get_tile_4bpp();                                                            \
