@@ -8,7 +8,7 @@ else
 SOURCES_C := $(CORE_DIR)/main.c \
 				 $(CORE_DIR)/cpu.c \
 				 $(CORE_DIR)/gba_memory_cpp.c \
-				 $(CORE_DIR)/video.c \
+				 $(CORE_DIR)/video_cpp.c \
 				 $(CORE_DIR)/input.c \
 				 $(CORE_DIR)/sound.c \
 				 $(CORE_DIR)/cheats.c \
