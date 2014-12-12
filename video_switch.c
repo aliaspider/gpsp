@@ -39,6 +39,11 @@ typedef enum
    affine
 }bg_type_enum;
 
+#ifdef __GNUC__
+#define inline     inline __attribute__((always_inline))
+#endif
+
+
 static inline void render_scanline_text(combine_op_enum combine_op, alpha_op_enum alpha_op, u32 layer,
  u32 start, u32 end, void *scanline);
 
@@ -796,7 +801,7 @@ static void render_scanline_conditional_bitmap(u32 start, u32 end, u16 *scanline
 {                                                                             \
   u32 vertical_pixel_offset = (vertical_offset % 8) *                         \
    tile_width_##color_depth;                                                  \
-  u32 vertical_pixel_flip =                                                   \
+  s32 vertical_pixel_flip =                                                   \
    ((tile_size_##color_depth - tile_width_##color_depth) -                    \
    vertical_pixel_offset) - vertical_pixel_offset;                            \
   tile_extra_variables_##color_depth();                                       \
