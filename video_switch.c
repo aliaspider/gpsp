@@ -965,6 +965,22 @@ static inline void render_scanline_extra_variables(combine_op_enum combine_op, a
    }
 }
 
+static inline void* get_dest_ptr(alpha_op_enum alpha_op, void* scanline, u32 start)
+{
+   switch (alpha_op)
+   {
+   case normal:
+   case color16:
+      return ((u16*)scanline) + start;
+      break;
+   case color32:
+   case alpha:
+   default:
+      return ((u32*)scanline) + start;
+      break;
+   }
+}
+
 static inline void render_scanline_text(combine_op_enum combine_op, alpha_op_enum alpha_op, u32 layer,
  u32 start, u32 end, void *scanline)
 {
@@ -982,8 +998,6 @@ static inline void render_scanline_text(combine_op_enum combine_op, alpha_op_enu
   u32 partial_tile_offset;
   u32 tile_run;
   u32 i;
-  render_scanline_dest_##alpha_op *dest_ptr =
-   ((render_scanline_dest_##alpha_op *)scanline) + start;
 
   u16 *map_base = (u16 *)(vram + ((bg_control >> 8) & 0x1F) * (1024 * 2));
   u16 *map_ptr, *second_ptr;
@@ -1024,11 +1038,107 @@ static inline void render_scanline_text(combine_op_enum combine_op, alpha_op_enu
 
   if(bg_control & 0x80)
   {
-    tile_render(8bpp, combine_op, alpha_op);
+     switch (combine_op)
+     {
+     case base:
+        switch (alpha_op)
+        {
+        case normal:
+        {
+           u16 *dest_ptr = ((u16*)scanline) + start;
+           tile_render(8bpp, base, normal);
+           break;
+        }
+        case color16:
+        {
+           u16 *dest_ptr = ((u16*)scanline) + start;
+           tile_render(8bpp, base, color16);
+           break;
+        }
+        case color32:
+        {
+           u32 *dest_ptr = ((u32*)scanline) + start;
+           tile_render(8bpp, base, color32);
+           break;
+        }
+        case alpha:
+        {
+           u32 *dest_ptr = ((u32*)scanline) + start;
+           tile_render(8bpp, base, alpha);
+           break;
+        }
+        }
+        break;
+     case transparent:
+        switch (alpha_op)
+        {
+        case normal:
+        {
+           u16 *dest_ptr = ((u16*)scanline) + start;
+           tile_render(8bpp, transparent, normal);
+           break;
+        }
+        case color16:
+        {
+           u16 *dest_ptr = ((u16*)scanline) + start;
+           tile_render(8bpp, transparent, color16);
+           break;
+        }
+        case color32:
+        {
+           u32 *dest_ptr = ((u32*)scanline) + start;
+           tile_render(8bpp, transparent, color32);
+           break;
+        }
+        case alpha:
+        {
+           u32 *dest_ptr = ((u32*)scanline) + start;
+           tile_render(8bpp, transparent, alpha);
+           break;
+        }
+        }
+        break;
+     }
   }
   else
   {
-    tile_render(4bpp, combine_op, alpha_op);
+     switch (combine_op)
+     {
+     case base:
+        switch (alpha_op)
+        {
+        case normal:
+           tile_render(4bpp, base, normal);
+           break;
+        case color16:
+           tile_render(4bpp, base, color16);
+           break;
+        case color32:
+           tile_render(4bpp, base, color32);
+           break;
+        case alpha:
+           tile_render(4bpp, base, alpha);
+           break;
+        }
+        break;
+     case transparent:
+        switch (alpha_op)
+        {
+        case normal:
+           tile_render(4bpp, transparent, normal);
+           break;
+        case color16:
+           tile_render(4bpp, transparent, color16);
+           break;
+        case color32:
+           tile_render(4bpp, transparent, color32);
+           break;
+        case alpha:
+           tile_render(4bpp, transparent, alpha);
+           break;
+        }
+        break;
+     }
   }
 }
 
