@@ -19,6 +19,70 @@
 
 #include "common.h"
 
+typedef enum
+{
+   base,
+   transparent
+}combine_op_enum;
+
+typedef enum
+{
+   normal,
+   color16,
+   color32,
+   alpha
+}alpha_op_enum;
+
+typedef enum
+{
+   text,
+   affine
+}bg_type_enum;
+
+static inline void render_scanline_text(combine_op_enum combine_op, alpha_op_enum alpha_op, u32 layer,
+ u32 start, u32 end, void *scanline);
+
+static inline void render_scanline_text_base_normal(u32 layer,
+ u32 start, u32 end, void *scanline)
+{
+   render_scanline_text(base, normal, layer, start, end, scanline);
+}
+static inline void render_scanline_text_transparent_normal(u32 layer,
+ u32 start, u32 end, void *scanline)
+{
+   render_scanline_text(transparent, normal, layer, start, end, scanline);
+}
+static inline void render_scanline_text_base_color16(u32 layer,
+ u32 start, u32 end, void *scanline)
+{
+   render_scanline_text(base, color16, layer, start, end, scanline);
+}
+static inline void render_scanline_text_transparent_color16(u32 layer,
+ u32 start, u32 end, void *scanline)
+{
+   render_scanline_text(transparent, color16, layer, start, end, scanline);
+}
+static inline void render_scanline_text_base_color32(u32 layer,
+ u32 start, u32 end, void *scanline)
+{
+   render_scanline_text(base, color32, layer, start, end, scanline);
+}
+static inline void render_scanline_text_transparent_color32(u32 layer,
+ u32 start, u32 end, void *scanline)
+{
+   render_scanline_text(transparent, color32, layer, start, end, scanline);
+}
+static inline void render_scanline_text_base_alpha(u32 layer,
+ u32 start, u32 end, void *scanline)
+{
+   render_scanline_text(base, alpha, layer, start, end, scanline);
+}
+static inline void render_scanline_text_transparent_alpha(u32 layer,
+ u32 start, u32 end, void *scanline)
+{
+   render_scanline_text(transparent, alpha, layer, start, end, scanline);
+}
+
 u16 gba_screen_pixels[GBA_SCREEN_PITCH * GBA_SCREEN_HEIGHT];
 
 #define get_screen_pixels()   gba_screen_pixels
@@ -818,17 +882,17 @@ static void render_scanline_conditional_bitmap(u32 start, u32 end, u16 *scanline
 
 
 #define render_scanline_extra_variables_base_normal(bg_type)                  \
-  u16 *palette = palette_ram_converted                                        \
+  palette = palette_ram_converted                                             \
 
 
 #define render_scanline_extra_variables_base_alpha(bg_type)                   \
-  u32 bg_combine = color_combine_mask(5);                                     \
-  u32 pixel_combine = color_combine_mask(layer) | (bg_combine << 16);         \
+  bg_combine = color_combine_mask(5);                                         \
+  pixel_combine = color_combine_mask(layer) | (bg_combine << 16);             \
   render_scanline_skip_alpha(bg_type, base)                                   \
 
 #define render_scanline_extra_variables_base_color()                          \
-  u32 bg_combine = color_combine_mask(5);                                     \
-  u32 pixel_combine = color_combine_mask(layer)                               \
+  bg_combine = color_combine_mask(5);                                         \
+  pixel_combine = color_combine_mask(layer)                                   \
 
 #define render_scanline_extra_variables_base_color16(bg_type)                 \
   render_scanline_extra_variables_base_color()                                \
@@ -841,11 +905,11 @@ static void render_scanline_conditional_bitmap(u32 start, u32 end, u16 *scanline
   render_scanline_extra_variables_base_normal(bg_type)                        \
 
 #define render_scanline_extra_variables_transparent_alpha(bg_type)            \
-  u32 pixel_combine = color_combine_mask(layer);                              \
+  pixel_combine = color_combine_mask(layer);                                  \
   render_scanline_skip_alpha(bg_type, transparent)                            \
 
 #define render_scanline_extra_variables_transparent_color()                   \
-  u32 pixel_combine = color_combine_mask(layer)                               \
+  pixel_combine = color_combine_mask(layer)                                   \
 
 #define render_scanline_extra_variables_transparent_color16(bg_type)          \
   render_scanline_extra_variables_transparent_color()                         \
@@ -860,132 +924,52 @@ static const u32 map_widths[] = { 256, 512, 256, 512 };
 
 // Build text scanline rendering functions.
 
-typedef enum
-{
-   base,
-   transparent
-}combine_op_enum;
-
-typedef enum
-{
-   normal,
-   color16,
-   color32,
-   alpha
-}alpha_op_enum;
-
-typedef enum
-{
-   text,
-   affine
-}bg_type_enum;
-
-static inline void render_scanline_extra_variables(combine_op_enum combine_op, alpha_op_enum alpha_op, bg_type_enum bg_type)
-{
-   switch (bg_type)
-   {
-   case text:
-      switch (combine_op)
-      {
-      case base:
-         switch (alpha_op)
-         {
-         case normal:
-            render_scanline_extra_variables_base_normal(text);
-            break;
-         case color16:
-            render_scanline_extra_variables_base_color16(text);
-            break;
-         case color32:
-            render_scanline_extra_variables_base_color32(text);
-            break;
-         case alpha:
-            render_scanline_extra_variables_base_alpha(text);
-            break;
-         }
-         break;
-      case transparent:
-         switch (alpha_op)
-         {
-         case normal:
-            render_scanline_extra_variables_transparent_normal(text);
-            break;
-         case color16:
-            render_scanline_extra_variables_transparent_color16(text);
-            break;
-         case color32:
-            render_scanline_extra_variables_transparent_color32(text);
-            break;
-         case alpha:
-            render_scanline_extra_variables_transparent_alpha(text);
-            break;
-         }
-         break;
-      }
-      break;
-   case affine:
-      switch (combine_op)
-      {
-      case base:
-         switch (alpha_op)
-         {
-         case normal:
-            render_scanline_extra_variables_base_normal(affine);
-            break;
-         case color16:
-            render_scanline_extra_variables_base_color16(affine);
-            break;
-         case color32:
-            render_scanline_extra_variables_base_color32(affine);
-            break;
-         case alpha:
-            render_scanline_extra_variables_base_alpha(affine);
-            break;
-         }
-         break;
-      case transparent:
-         switch (alpha_op)
-         {
-         case normal:
-            render_scanline_extra_variables_transparent_normal(affine);
-            break;
-         case color16:
-            render_scanline_extra_variables_transparent_color16(affine);
-            break;
-         case color32:
-            render_scanline_extra_variables_transparent_color32(affine);
-            break;
-         case alpha:
-            render_scanline_extra_variables_transparent_alpha(affine);
-            break;
-         }
-         break;
-      }
-      break;
-   }
-}
-
-static inline void* get_dest_ptr(alpha_op_enum alpha_op, void* scanline, u32 start)
-{
-   switch (alpha_op)
-   {
-   case normal:
-   case color16:
-      return ((u16*)scanline) + start;
-      break;
-   case color32:
-   case alpha:
-   default:
-      return ((u32*)scanline) + start;
-      break;
-   }
-}
-
 static inline void render_scanline_text(combine_op_enum combine_op, alpha_op_enum alpha_op, u32 layer,
  u32 start, u32 end, void *scanline)
 {
-  render_scanline_extra_variables(combine_op, alpha_op, text);
-  u32 bg_control = io_registers[REG_BG0CNT + layer];
+   u16 *palette;
+   u32 bg_combine;
+   u32 pixel_combine;
+
+   switch (combine_op)
+   {
+   case base:
+      switch (alpha_op)
+      {
+      case normal:
+         render_scanline_extra_variables_base_normal(text);
+         break;
+      case color16:
+         render_scanline_extra_variables_base_color16(text);
+         break;
+      case color32:
+         render_scanline_extra_variables_base_color32(text);
+         break;
+      case alpha:
+         render_scanline_extra_variables_base_alpha(text);
+         break;
+      }
+      break;
+   case transparent:
+      switch (alpha_op)
+      {
+      case normal:
+         render_scanline_extra_variables_transparent_normal(text);
+         break;
+      case color16:
+         render_scanline_extra_variables_transparent_color16(text);
+         break;
+      case color32:
+         render_scanline_extra_variables_transparent_color32(text);
+         break;
+      case alpha:
+         render_scanline_extra_variables_transparent_alpha(text);
+         break;
+      }
+      break;
+   }
+
+   u32 bg_control = io_registers[REG_BG0CNT + layer];
   u32 map_size = (bg_control >> 14) & 0x03;
   u32 map_width = map_widths[map_size];
   u32 horizontal_offset =
@@ -1036,7 +1020,7 @@ static inline void render_scanline_text(combine_op_enum combine_op, alpha_op_enu
     second_ptr = map_base;
   }
 
-  if(bg_control & 0x80)
+  if(bg_control & 0x80) /* 8bpp */
   {
      switch (combine_op)
      {
@@ -1100,7 +1084,7 @@ static inline void render_scanline_text(combine_op_enum combine_op, alpha_op_enu
         break;
      }
   }
-  else
+  else /* 4bpp */
   {
      switch (combine_op)
      {
@@ -1108,79 +1092,62 @@ static inline void render_scanline_text(combine_op_enum combine_op, alpha_op_enu
         switch (alpha_op)
         {
         case normal:
+        {
+           u16 *dest_ptr = ((u16*)scanline) + start;
            tile_render(4bpp, base, normal);
            break;
+        }
         case color16:
+        {
+           u16 *dest_ptr = ((u16*)scanline) + start;
            tile_render(4bpp, base, color16);
            break;
+        }
         case color32:
+        {
+           u32 *dest_ptr = ((u32*)scanline) + start;
            tile_render(4bpp, base, color32);
            break;
+        }
         case alpha:
+        {
+           u32 *dest_ptr = ((u32*)scanline) + start;
            tile_render(4bpp, base, alpha);
            break;
+        }
         }
         break;
      case transparent:
         switch (alpha_op)
         {
         case normal:
+        {
+           u16 *dest_ptr = ((u16*)scanline) + start;
            tile_render(4bpp, transparent, normal);
            break;
+        }
         case color16:
+        {
+           u16 *dest_ptr = ((u16*)scanline) + start;
            tile_render(4bpp, transparent, color16);
            break;
+        }
         case color32:
+        {
+           u32 *dest_ptr = ((u32*)scanline) + start;
            tile_render(4bpp, transparent, color32);
            break;
+        }
         case alpha:
+        {
+           u32 *dest_ptr = ((u32*)scanline) + start;
            tile_render(4bpp, transparent, alpha);
            break;
+        }
         }
         break;
      }
   }
-}
-
-static inline void render_scanline_text_base_normal(u32 layer,
- u32 start, u32 end, void *scanline)
-{
-   render_scanline_text(base, normal, layer, start, end, scanline);
-}
-static inline void render_scanline_text_transparent_normal(u32 layer,
- u32 start, u32 end, void *scanline)
-{
-   render_scanline_text(transparent, normal, layer, start, end, scanline);
-}
-static inline void render_scanline_text_base_color16(u32 layer,
- u32 start, u32 end, void *scanline)
-{
-   render_scanline_text(base, color16, layer, start, end, scanline);
-}
-static inline void render_scanline_text_transparent_color16(u32 layer,
- u32 start, u32 end, void *scanline)
-{
-   render_scanline_text(transparent, color16, layer, start, end, scanline);
-}
-static inline void render_scanline_text_base_color32(u32 layer,
- u32 start, u32 end, void *scanline)
-{
-   render_scanline_text(base, color32, layer, start, end, scanline);
-}
-static inline void render_scanline_text_transparent_color32(u32 layer,
- u32 start, u32 end, void *scanline)
-{
-   render_scanline_text(transparent, color32, layer, start, end, scanline);
-}
-static inline void render_scanline_text_base_alpha(u32 layer,
- u32 start, u32 end, void *scanline)
-{
-   render_scanline_text(base, alpha, layer, start, end, scanline);
-}
-static inline void render_scanline_text_transparent_alpha(u32 layer,
- u32 start, u32 end, void *scanline)
-{
-   render_scanline_text(transparent, alpha, layer, start, end, scanline);
 }
 
 s32 affine_reference_x[2];
@@ -1359,6 +1326,9 @@ s32 affine_reference_y[2];
 void render_scanline_affine_##combine_op##_##alpha_op(u32 layer,              \
  u32 start, u32 end, void *scanline)                                          \
 {                                                                             \
+  u16 *palette;                                                               \
+  u32 bg_combine;                                                             \
+  u32 pixel_combine;                                                          \
   render_scanline_extra_variables_##combine_op##_##alpha_op(affine);          \
   u32 bg_control = io_registers[REG_BG0CNT + layer];                          \
   u32 current_pixel;                                                          \
